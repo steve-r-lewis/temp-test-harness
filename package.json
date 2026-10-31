@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "pwsh -NoProfile -File ./scripts/start-dev.ps1",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "db:setup": "pwsh -NoProfile -File ./scripts/ensure-test-db.ps1"
   },
   "dependencies": {
     "@nuxt4-layers/authorisation": "github:nuxt-layers/authorisation#master",
