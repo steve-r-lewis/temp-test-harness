@@ -12,7 +12,11 @@
   "dependencies": {
     "@nuxt4-layers/authorisation": "github:nuxt-layers/authorisation#master",
     "nuxt": "^4.6.3",
+    "pg": "^8.23.1",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
   }
 }
