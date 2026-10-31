@@ -77,7 +77,7 @@ for ($i = 0; $i -lt 30; $i++) {
 }
 if (-not $ready) { Fail 'PostgreSQL did not become ready.' }
 
-$roleExists = (& docker.exe exec $name psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'authorisation_contract'").Trim()
+$roleExists = ([string](& docker.exe exec $name psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'authorisation_contract'")).Trim()
 if ($LASTEXITCODE -ne 0) { Fail 'Unable to inspect PostgreSQL roles.' }
 if ($roleExists -ne '1') {
     $escaped = $env:PGPASSWORD.Replace("'", "''")
@@ -86,7 +86,7 @@ if ($roleExists -ne '1') {
     if ($LASTEXITCODE -ne 0) { Fail 'Unable to create dedicated test role.' }
     Write-Host 'Created dedicated test role.'
 }
-$dbExists = (& docker.exe exec $name psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'authorisation_contract_test'").Trim()
+$dbExists = ([string](& docker.exe exec $name psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'authorisation_contract_test'")).Trim()
 if ($LASTEXITCODE -ne 0) { Fail 'Unable to inspect PostgreSQL databases.' }
 if ($dbExists -ne '1') {
     Invoke-DockerChecked @('exec', $name, 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1',
