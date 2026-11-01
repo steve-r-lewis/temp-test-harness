@@ -26,24 +26,28 @@ export default defineEventHandler(async () => {
   const cases = [
     {
       name: 'unknown principal',
+      expectedReason: 'unknown-subject',
       subject: subject('30000000-0000-4000-8000-000000000099'),
       permission: 'orders:view',
       resource,
     },
     {
       name: 'unknown permission',
+      expectedReason: 'unknown-permission',
       subject: subject('30000000-0000-4000-8000-000000000001'),
       permission: 'orders:nonexistent',
       resource,
     },
     {
       name: 'suspended principal',
+      expectedReason: null, // Must reject on suspension, not unknown-group.
       subject: subject('30000000-0000-4000-8000-000000000002'),
       permission: 'orders:view',
       resource,
     },
     {
       name: 'tenant mismatch',
+      expectedReason: 'tenant-mismatch',
       subject: subject('30000000-0000-4000-8000-000000000001'),
       permission: 'orders:view',
       resource,
@@ -54,11 +58,14 @@ export default defineEventHandler(async () => {
   const results = []
   for (const testCase of cases) {
     const decision = await authorise(testCase)
-    results.push({ case: testCase.name, denied: !decision.allowed, reason: decision.allowed ? null : decision.reason })
-    if (decision.allowed) {
+    const reason = decision.allowed ? null : decision.reason
+    const correctlyDenied = !decision.allowed && reason !== 'unknown-group' &&
+      (testCase.expectedReason === null || reason === testCase.expectedReason)
+    results.push({ case: testCase.name, passed: correctlyDenied, denied: !decision.allowed, reason })
+    if (!correctlyDenied) {
       throw createError({
         statusCode: 500,
-        statusMessage: `Contract acceptance failed: unexpected allow for ${testCase.name}`,
+        statusMessage: `Contract acceptance failed: incorrect decision for ${testCase.name}`,
       })
     }
   }
