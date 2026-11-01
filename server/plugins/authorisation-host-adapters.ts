@@ -12,7 +12,8 @@ import type {
 /** Fixed, synthetic identity directory for a development-only consumer test. */
 const group: AuthorisationGroup = {
   groupId: '10000000-0000-4000-8000-000000000001',
-  lineage: [],
+  // Public decision engine requires lineage to end with the group itself.
+  lineage: ['10000000-0000-4000-8000-000000000001'],
   tenantId: '20000000-0000-4000-8000-000000000001',
 }
 
