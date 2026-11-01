@@ -6,6 +6,7 @@ import type {
   AuthorisationGroup,
   AuthorisationActorContext,
   AuthorisationGovernedGroup,
+  AuthorisationRequiredApprovers,
 } from '@nuxt4-layers/authorisation/contracts'
 
 /** Fixed, synthetic identity directory for a development-only consumer test. */
@@ -30,7 +31,31 @@ const actors: Record<string, AuthorisationActorContext> = {
   },
 }
 
-const governedGroup: AuthorisationGovernedGroup | null = null
+const requiredApprovers: AuthorisationRequiredApprovers = {
+  low: 0,
+  medium: 0,
+  high: 1,
+  critical: 2,
+}
+
+/** A synthetic, active governed group; no owner or roles are granted. */
+const governedGroup: AuthorisationGovernedGroup = {
+  groupId: group.groupId,
+  tenantId: group.tenantId,
+  kind: 'standard',
+  state: 'active',
+  parentGroupId: null,
+  rootGroupId: group.groupId,
+  personalOfPrincipalId: null,
+  approvals: { required: requiredApprovers, referenceRequired: false },
+  safetyPeriods: {
+    publishedDelayHighHours: 24,
+    publishedDelayCriticalHours: 48,
+    approvalExpiryDays: 7,
+    recoveryHoldHours: 24,
+  },
+  requester: { recoveryHoldUntil: null, controls: [] },
+}
 
 const directory: AuthorisationDirectory = {
   async resolveActor(principalId) {
@@ -42,8 +67,8 @@ const directory: AuthorisationDirectory = {
 }
 
 const governance: AuthorisationGovernance = {
-  async describeGroup() {
-    return governedGroup
+  async describeGroup({ groupId }) {
+    return groupId === group.groupId ? governedGroup : null
   },
   async isOwner() {
     return false
