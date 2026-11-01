@@ -2,7 +2,7 @@
  * Stage 5 negative decision matrix. The subjects are constructed on the server;
  * the endpoint accepts no principal, assurance or tenant input from callers.
  */
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
   if (!import.meta.dev) {
     throw createError({ statusCode: 404, statusMessage: 'Not Found' })
   }
@@ -62,12 +62,12 @@ export default defineEventHandler(async () => {
     const correctlyDenied = !decision.allowed && reason !== 'unknown-group' &&
       (testCase.expectedReason === null || reason === testCase.expectedReason)
     results.push({ case: testCase.name, passed: correctlyDenied, denied: !decision.allowed, reason })
-    if (!correctlyDenied) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Contract acceptance failed: incorrect decision for ${testCase.name}`,
-      })
-    }
   }
-  return { passed: true, results }
+  // Return every public decision, including failures, for one-request diagnostics.
+  // HTTP 500 preserves the acceptance failure signal for CI.
+  const passed = results.every(result => result.passed)
+  if (!passed) {
+    setResponseStatus(event, 500)
+  }
+  return { passed, results }
 })
