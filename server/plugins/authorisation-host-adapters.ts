@@ -3,24 +3,47 @@ import type {
   AuthorisationGovernance,
   AuthorisationSubjectResolver,
   AuthorisationPermissionDefinitionInput,
+  AuthorisationGroup,
+  AuthorisationActorContext,
+  AuthorisationGovernedGroup,
 } from '@nuxt4-layers/authorisation/contracts'
 
-/**
- * Clean-room Stage 4 adapters. These fixtures deliberately do not grant
- * membership or ownership. No external IAM layer or provider internals.
- */
-const directory: AuthorisationDirectory = {
-  async resolveActor() {
-    return null
+/** Fixed, synthetic identity directory for a development-only consumer test. */
+const group: AuthorisationGroup = {
+  groupId: '10000000-0000-4000-8000-000000000001',
+  lineage: [],
+  tenantId: '20000000-0000-4000-8000-000000000001',
+}
+
+const actors: Record<string, AuthorisationActorContext> = {
+  '30000000-0000-4000-8000-000000000001': {
+    principalId: '30000000-0000-4000-8000-000000000001',
+    status: 'active',
+    personalGroup: null,
+    memberships: [{ group, status: 'active' }],
   },
-  async describeGroup() {
-    return null
+  '30000000-0000-4000-8000-000000000002': {
+    principalId: '30000000-0000-4000-8000-000000000002',
+    status: 'suspended',
+    personalGroup: null,
+    memberships: [{ group, status: 'suspended' }],
+  },
+}
+
+const governedGroup: AuthorisationGovernedGroup | null = null
+
+const directory: AuthorisationDirectory = {
+  async resolveActor(principalId) {
+    return actors[principalId] ?? null
+  },
+  async describeGroup(groupId) {
+    return groupId === group.groupId ? group : null
   },
 }
 
 const governance: AuthorisationGovernance = {
   async describeGroup() {
-    return null
+    return governedGroup
   },
   async isOwner() {
     return false
@@ -32,7 +55,7 @@ const governance: AuthorisationGovernance = {
 
 const subjectResolver: AuthorisationSubjectResolver = {
   async resolve() {
-    // No trusted authentication integration exists in this isolated harness.
+    // An HTTP caller can never claim one of these synthetic principals.
     return null
   },
 }
@@ -44,9 +67,8 @@ const domainPermissions: AuthorisationPermissionDefinitionInput[] = [
 
 export default defineNitroPlugin(() => {
   if (process.env.PGDATABASE !== 'authorisation_contract_test') {
-    throw new Error('Refusing Authorisation fixture adapters outside isolated test database')
+    throw new Error('Refusing Authorisation fixtures outside isolated test database')
   }
-
   provideAuthorisationDirectory(directory)
   provideAuthorisationGovernance(governance)
   provideAuthorisationSubjectResolver(subjectResolver)
